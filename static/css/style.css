@@ -20,11 +20,20 @@ h1 {
 }
 
 .chart-container {
-    width: 60%;
+    width: 40%;
     margin: auto;
     background: rgb(255, 255, 255);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
+}
+
+canvas {
+    max-width: 500px !important;
+    max-height: 500px !important;
+    width: 100% !important;
+    height: auto !important;
+    display: block;
+    margin: auto;
 }

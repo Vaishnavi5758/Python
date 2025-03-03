@@ -4,32 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Visualization Dashboard</title>
-    <link rel="stylesheet" href="static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>Data Visualization Dashboard</h1>
+    <h2>Data Visualization Dashboard</h2>
 
     <!-- Filters -->
-    <div class="filters">
-        <label for="yearFilter">Year:</label>
-        <select id="yearFilter" onchange="filterData()"></select>
+    <label for="yearFilter">Year:</label>
+<select id="yearFilter" onchange="filterData()">
+    <option value="">All Years</option>
+</select>
 
-        <label for="countryFilter">Country:</label>
-        <select id="countryFilter" onchange="filterData()"></select>
+<label for="countryFilter">Country:</label>
+<select id="countryFilter" onchange="filterData()">
+    <option value="">All Countries</option>
+</select>
 
-        <label for="sectorFilter">Sector:</label>
-        <select id="sectorFilter" onchange="filterData()"></select>
-    </div>
+<label for="sectorFilter">Sector:</label>
+<select id="sectorFilter" onchange="filterData()">
+    <option value="">All Sectors</option>
+</select>
 
+<!-- ADD NEW FILTERS -->
+<label for="topicsFilter">Topics:</label>
+<select id="topicsFilter" onchange="filterData()">
+    <option value="">All Topics</option>
+</select>
+
+<label for="regionFilter">Region:</label>
+<select id="regionFilter" onchange="filterData()">
+    <option value="">All Regions</option>
+</select>
+
+<label for="pestFilter">PESTLE:</label>
+<select id="pestFilter" onchange="filterData()">
+    <option value="">All PESTs</option>
+</select>
+
+<label for="sourceFilter">Source:</label>
+<select id="sourceFilter" onchange="filterData()">
+    <option value="">All Sources</option>
+</select>
+
+
+
+<label for="cityFilter">City:</label>
+<select id="cityFilter" onchange="filterData()">
+    <option value="">All Cities</option>
+</select>
     <!-- Charts -->
-    <div class="chart-container">
+    <div style="width: 800px; height: 400px; margin: auto;">
         <canvas id="barChart"></canvas>
     </div>
-
-    <div class="chart-container">
+    <div style="width: 800px; height: 400px; margin: auto;">
         <canvas id="pieChart"></canvas>
     </div>
+    <div style="width: 800px; height: 400px; margin: auto;">
+        <canvas id="lineChart"></canvas>
+    </div>
+    
 
     <script src="static/js/main.js"></script>
 </body>
