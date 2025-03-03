@@ -1,4 +1,4 @@
-console.log("<<<<<<<<<<<<<<<<<<<hiiiiiiiiiiiii")
+console.log("<<<<<<<<<<<<<<<<<<<hii")
 let allData = [];  // Store all data globally
 let barChart, pieChart;  // References to Chart.js instances
 

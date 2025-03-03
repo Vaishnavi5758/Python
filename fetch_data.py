@@ -10,7 +10,7 @@ def fetch_data():
         cursor = conn.cursor(dictionary=True)
 
         # Fetch all data
-        cursor.execute("SELECT * FROM data_table")  # Replace with your actual table name
+        cursor.execute("SELECT * FROM data_table")  
         data = cursor.fetchall()
 
         # Calculate sector-wise counts safely
