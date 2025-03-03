@@ -58,19 +58,19 @@ function initializeCharts() {
     barChart = new Chart(barCtx, {
         type: 'bar',
         data: { labels: [], datasets: [{ label: 'Intensity', data: [], backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        options: { responsive: true,plugins: { title: { display: true, text: 'Average Intensity by Sector',font: { size:16, weight: 'bold'}}}, scales: { y: { beginAtZero: true } } }
     });
 
     pieChart = new Chart(pieCtx, {
         type: 'pie',
         data: { labels: [], datasets: [{ label: 'Sector Distribution', data: [], backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#9C27B0'] }] },
-        options: { responsive: true }
+        options: { responsive: true,plugins: { title: { display: true, text: 'Sector Distribution',font: { size:16, weight: 'bold'}}} }
     });
 
     lineChart = new Chart(lineCtx, {
         type: 'line',
-        data: { labels: [], datasets: [{ label: 'Likelihood', data: [], borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(255, 99, 132, 0.2)', borderWidth: 2, fill: true }] },
-        options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        data: { labels: [], datasets: [{ label: 'Likelihood', data: [], borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(41, 36, 37, 0.2)', borderWidth: 2, fill: true }] },
+        options: { responsive: true,plugins: { title: { display: true, text: 'Likelihood Over Years',font: { size:16, weight: 'bold'}}}, scales: { y: { beginAtZero: true } } }
     });
 
     filterData();
