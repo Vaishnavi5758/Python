@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Visualization Dashboard</title>
+    <link rel="stylesheet" href="static/css/style.css">  <!-- Link to CSS file -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <h1>Data Visualization Dashboard</h1>
+
+    <!-- Filters -->
+    <div class="filters">
+        <label for="yearFilter">Year:</label>
+        <select id="yearFilter" onchange="filterData()">
+            <option value="">All</option>
+        </select>
+
+        <label for="countryFilter">Country:</label>
+        <select id="countryFilter" onchange="filterData()">
+            <option value="">All</option>
+        </select>
+
+        <label for="sectorFilter">Sector:</label>
+        <select id="sectorFilter" onchange="filterData()">
+            <option value="">All</option>
+        </select>
+    </div>
+
+    <!-- Chart Containers -->
+    <div class="chart-container">
+        <div>
+            <h2>Intensity by Country</h2>
+            <canvas id="barChart"></canvas>
+        </div>
+        <div>
+            <h2>Sector Distribution</h2>
+            <canvas id="pieChart"></canvas>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="static/js/main.js"></script>
+
+</body>
+</html>
