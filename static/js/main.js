@@ -15,11 +15,12 @@ async function fetchData() {
         console.log("Fetched Data:", result);
 
         if (Array.isArray(result?.data)) {
-            allData = result.data;  // Fix here
-            swotData = result?.swot || {};
-            filteredData = allData; 
+            allData = result.data;  
+            swotData = result?.swot || {};  
+            filteredData = allData;  
 
-            console.log("Processed Data:", filteredData);
+            console.log("Processed Data:", allData);
+            console.log("Initial SWOT Data:", swotData);  // Debugging  
 
             populateFilters(allData);
             initializeCharts();
@@ -31,6 +32,7 @@ async function fetchData() {
         console.error("Error fetching data:", error);
     }
 }
+
 // Populate Filters
 function populateFilters(data) {
     console.log("Populating filters with data:", data);
@@ -66,52 +68,51 @@ function populateDropdown(dropdown, items, defaultText) {
     dropdown.addEventListener("change", filterData);
 }
 
-// Initialize Charts
-function initializeCharts() {
-    const barCtx = document.getElementById('barChart').getContext('2d');
-    const pieCtx = document.getElementById('pieChart').getContext('2d');
-    const lineCtx = document.getElementById('lineChart').getContext('2d');
-    const swotCtx = document.getElementById('swotChart').getContext('2d');
-
-    barChart = new Chart(barCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Intensity per Sector', data: [], backgroundColor: '#4CAF50' }] }, options: { responsive: true } });
-    pieChart = new Chart(pieCtx, { type: 'pie', data: { labels: [], datasets: [{ label: 'Sector Distribution', data: [], backgroundColor: ['#FF5733', '#FFC107', '#4CAF50', '#C70039'] }] }, options: { responsive: true } });
-    lineChart = new Chart(lineCtx, { type: 'line', data: { labels: [], datasets: [{ label: 'Yearly Trends', data: [], borderColor: '#4CAF50', fill: false }] }, options: { responsive: true } });
-    swotChart = new Chart(swotCtx, { type: 'polarArea', data: { labels: ['Strengths', 'Weaknesses', 'Opportunities', 'Threats'], datasets: [{ label: 'SWOT Analysis', data: [0, 0, 0, 0], backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#C70039'] }] }, options: { responsive: true } });
-
-    updateCharts();
-}
-
 // Filter Data Based on Selections
 function filterData() {
     if (!Array.isArray(filteredData)) {
         console.error("filteredData is not an array", filteredData);
         return;
     }
-    let selectedCountry = document.getElementById("countryFilter").value;
+
     let selectedSector = document.getElementById("sectorFilter").value;
-    let selectedSWOT = document.getElementById("swotFilter").value;
+    let selectedCountry = document.getElementById("countryFilter").value;
+    let selectedYear = document.getElementById("yearFilter").value;
     let selectedLikelihood = document.getElementById("likelihoodFilter").value;
 
-    let filteredResults = filteredData.filter(item => 
-        (selectedCountry === "" || item.country === selectedCountry) &&
+    // Filter dataset based on selected filters
+    let filteredResults = allData.filter(item => 
         (selectedSector === "" || item.sector === selectedSector) &&
-        (selectedSWOT === "" || item.swot_type === selectedSWOT) &&
+        (selectedCountry === "" || item.country === selectedCountry) &&
+        (selectedYear === "" || item.end_year === selectedYear) &&
         (selectedLikelihood === "" || item.likelihood === Number(selectedLikelihood))
     );
 
     console.log("Filtered Results:", filteredResults);
-    updateCharts(filteredResults);
+
+    // Extract SWOT data correctly
+// Manually sum SWOT values from the filtered dataset
+let updatedSWOTData = {
+    Strengths: filteredResults.reduce((sum, d) => sum + (d.relevance >= 4 && d.impact > 0 ? 1 : 0), 0),
+    Weaknesses: filteredResults.reduce((sum, d) => sum + (d.relevance <= 2 && d.impact < 0 ? 1 : 0), 0),
+    Opportunities: filteredResults.reduce((sum, d) => sum + (d.likelihood >= 3 ? 1 : 0), 0),
+    Threats: filteredResults.reduce((sum, d) => sum + (d.intensity >= 4 ? 1 : 0), 0)
+  };
+  
+  console.log("Updated SWOT Data:", updatedSWOTData);
+    // Update Charts with filtered data & updated SWOT data
+    updateCharts(filteredResults, updatedSWOTData);
 }
 
 // Update Charts
-function updateCharts(filteredData = allData) {
+function updateCharts(filteredData = allData, updatedSWOTData = swotData) {
     if (!Array.isArray(filteredData)) {
         console.error("filteredData is not an array:", filteredData);
         return;
     }
 
     console.log("Updating Charts with:", filteredData);
-
+    
     // Bar Chart - Intensity vs Sector
     const sectorLabels = [...new Set(filteredData.map(d => d.sector))];
     const intensityData = sectorLabels.map(sector => filteredData.filter(d => d.sector === sector).reduce((sum, item) => sum + (item.intensity || 0), 0));
@@ -134,15 +135,35 @@ function updateCharts(filteredData = allData) {
     lineChart.data.datasets[0].data = yearCounts;
     lineChart.update();
 
-    // SWOT Chart
+    console.log("Updating SWOT Chart with:", updatedSWOTData);
+
+    // SWOT Chart - Update with new SWOT Data
     swotChart.data.datasets[0].data = [
-        swotData["Strengths"] || 0,
-        swotData["Weaknesses"] || 0,
-        swotData["Opportunities"] || 0,
-        swotData["Threats"] || 0
+        updatedSWOTData["Strengths"] || 0,
+        updatedSWOTData["Weaknesses"] || 0,
+        updatedSWOTData["Opportunities"] || 0,
+        updatedSWOTData["Threats"] || 0
     ];
+    console.log("swot chart data before update",swotChart.data.datasets[0].data)
     swotChart.update();
 }
 
+// Initialize Charts
+function initializeCharts() {
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    const swotCtx = document.getElementById('swotChart').getContext('2d');
+
+    barChart = new Chart(barCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Intensity per Sector', data: [], backgroundColor: '#4CAF50' }] }, options: { responsive: true } });
+    pieChart = new Chart(pieCtx, { type: 'pie', data: { labels: [], datasets: [{ label: 'Sector Distribution', data: [], backgroundColor: ['#FF5733', '#FFC107', '#4CAF50', '#C70039'] }] }, options: { responsive: true } });
+    lineChart = new Chart(lineCtx, { type: 'line', data: { labels: [], datasets: [{ label: 'Yearly Trends', data: [], borderColor: '#4CAF50', fill: false }] }, options: { responsive: true } });
+    swotChart = new Chart(swotCtx, { type: 'polarArea', data: { labels: ['Strengths', 'Weaknesses', 'Opportunities', 'Threats'], datasets: [{ label: 'SWOT Analysis', data: [0, 0, 0, 0], backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#C70039'] }] }, options: { responsive: true } });
+
+    updateCharts();
+}
+
 // Fetch Data on Page Load
+window.onload = function(){
 fetchData();
+}
