@@ -53,6 +53,15 @@
         <select id="cityFilter" onchange="filterData()">
             <option value="">All Cities</option>
         </select>
+        <label for="likelihoodFilter">Likelihood:</label>
+        <select id="likelihoodFilter" onchange="filterData()">
+            <option value="">Likelihood</option>
+        </select>
+
+        <label for="swotFilter">SWOT:</label>
+        <select id="swotFilter" onchange="filterData()">
+            <option value="">All SWOTs</option>
+        </select>
     </div>
 
     <!-- Chart Section -->
@@ -70,6 +79,11 @@
         <div class="chart-box">
             <h3>📊 Growth Over Time (Line Chart)</h3>
             <canvas id="lineChart"></canvas>
+        </div>
+
+        <div class="chart-box">
+            <h3>🌀 SWOT Analysis (Spiral Chart)</h3>
+            <canvas id="swotChart"></canvas>
         </div>
     </div>
 

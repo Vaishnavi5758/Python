@@ -1,29 +1,40 @@
 console.log("Initializing Dashboard...");
-console.log("Initializing Dashboard..hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh.");
-let allData = [];  
-let barChart, pieChart, lineChart;  
+
+let allData = [];
+let swotData = {};  
+let filteredData = []; 
+let barChart, pieChart, lineChart, swotChart;
 
 // Fetch Data from API
 async function fetchData() {
     try {
-        const response = await fetch('/data');  
-        const result = await response.json();  
+        const response = await fetch('/fetch_data');
+        if (!response.ok) throw new Error("Network response was not ok");
+
+        const result = await response.json();
         console.log("Fetched Data:", result);
 
-        if (Array.isArray(result.data)) {  
-            allData = result.data;  
-            populateFilters(allData);  
-            initializeCharts();  
+        if (Array.isArray(result?.data)) {
+            allData = result.data;  // Fix here
+            swotData = result?.swot || {};
+            filteredData = allData; 
+
+            console.log("Processed Data:", filteredData);
+
+            populateFilters(allData);
+            initializeCharts();
+            filterData();
         } else {
-            console.error("API response is not an array:", result);
+            console.error("Unexpected API response format:", result);
         }
     } catch (error) {
         console.error("Error fetching data:", error);
     }
 }
-
 // Populate Filters
 function populateFilters(data) {
+    console.log("Populating filters with data:", data);
+
     const filters = {
         yearFilter: [...new Set(data.map(d => d.end_year).filter(Boolean))].sort(),
         countryFilter: [...new Set(data.map(d => d.country).filter(Boolean))].sort(),
@@ -32,20 +43,26 @@ function populateFilters(data) {
         regionFilter: [...new Set(data.map(d => d.region).filter(Boolean))].sort(),
         pestFilter: [...new Set(data.map(d => d.pestle).filter(Boolean))].sort(),
         sourceFilter: [...new Set(data.map(d => d.source).filter(Boolean))].sort(),
-        cityFilter: [...new Set(data.map(d => d.city).filter(Boolean))].sort()
+        cityFilter: [...new Set(data.map(d => d.city).filter(Boolean))].sort(),
+        likelihoodFilter: [...new Set(data.map(d => d.likelihood).filter(Boolean))].sort(),
+        swotFilter: ["Opportunities", "Strengths", "Threats", "Weaknesses"]
     };
 
     for (const [id, values] of Object.entries(filters)) {
+        console.log(`Populating ${id} with values:`, values);
         populateDropdown(document.getElementById(id), values, id.replace("Filter", ""));
     }
 }
 
 // Helper to Populate Dropdowns
 function populateDropdown(dropdown, items, defaultText) {
-    dropdown.innerHTML = `<option value="">All ${defaultText}s</option>`; 
+    if (!dropdown) return;
+
+    dropdown.innerHTML = `<option value="">All ${defaultText}s</option>`;
     items.forEach(item => {
         dropdown.innerHTML += `<option value="${item}">${item}</option>`;
     });
+
     dropdown.addEventListener("change", filterData);
 }
 
@@ -54,99 +71,77 @@ function initializeCharts() {
     const barCtx = document.getElementById('barChart').getContext('2d');
     const pieCtx = document.getElementById('pieChart').getContext('2d');
     const lineCtx = document.getElementById('lineChart').getContext('2d');
+    const swotCtx = document.getElementById('swotChart').getContext('2d');
 
-    barChart = new Chart(barCtx, {
-        type: 'bar',
-        data: { labels: [], datasets: [{ label: 'Intensity', data: [], backgroundColor: 'rgba(54, 162, 235, 0.5)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1 }] },
-        options: { responsive: true,plugins: { title: { display: true, text: 'Average Intensity by Sector',font: { size:16, weight: 'bold'}}}, scales: { y: { beginAtZero: true } } }
-    });
+    barChart = new Chart(barCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Intensity per Sector', data: [], backgroundColor: '#4CAF50' }] }, options: { responsive: true } });
+    pieChart = new Chart(pieCtx, { type: 'pie', data: { labels: [], datasets: [{ label: 'Sector Distribution', data: [], backgroundColor: ['#FF5733', '#FFC107', '#4CAF50', '#C70039'] }] }, options: { responsive: true } });
+    lineChart = new Chart(lineCtx, { type: 'line', data: { labels: [], datasets: [{ label: 'Yearly Trends', data: [], borderColor: '#4CAF50', fill: false }] }, options: { responsive: true } });
+    swotChart = new Chart(swotCtx, { type: 'polarArea', data: { labels: ['Strengths', 'Weaknesses', 'Opportunities', 'Threats'], datasets: [{ label: 'SWOT Analysis', data: [0, 0, 0, 0], backgroundColor: ['#4CAF50', '#FF5733', '#FFC107', '#C70039'] }] }, options: { responsive: true } });
 
-    pieChart = new Chart(pieCtx, {
-        type: 'pie',
-        data: { labels: [], datasets: [{ label: 'Sector Distribution', data: [], backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#9C27B0'] }] },
-        options: { responsive: true,plugins: { title: { display: true, text: 'Sector Distribution',font: { size:16, weight: 'bold'}}} }
-    });
-
-    lineChart = new Chart(lineCtx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ label: 'Likelihood', data: [], borderColor: 'rgba(255, 99, 132, 1)', backgroundColor: 'rgba(41, 36, 37, 0.2)', borderWidth: 2, fill: true }] },
-        options: { responsive: true,plugins: { title: { display: true, text: 'Likelihood Over Years',font: { size:16, weight: 'bold'}}}, scales: { y: { beginAtZero: true } } }
-    });
-
-    filterData();
+    updateCharts();
 }
 
 // Filter Data Based on Selections
 function filterData() {
-    console.log("Filtering data...");
-    const filters = {
-        end_year: document.getElementById("yearFilter").value,
-        country: document.getElementById("countryFilter").value,
-        sector: document.getElementById("sectorFilter").value,
-        topic: document.getElementById("topicsFilter").value,
-        region: document.getElementById("regionFilter").value,
-        pestle: document.getElementById("pestFilter").value,
-        source: document.getElementById("sourceFilter").value,
-        city: document.getElementById("cityFilter").value
-    };
+    if (!Array.isArray(filteredData)) {
+        console.error("filteredData is not an array", filteredData);
+        return;
+    }
+    let selectedCountry = document.getElementById("countryFilter").value;
+    let selectedSector = document.getElementById("sectorFilter").value;
+    let selectedSWOT = document.getElementById("swotFilter").value;
+    let selectedLikelihood = document.getElementById("likelihoodFilter").value;
 
-    const filteredData = allData.filter(d => {
-        return Object.keys(filters).every(key => !filters[key] || d[key] == filters[key]);
-    });
+    let filteredResults = filteredData.filter(item => 
+        (selectedCountry === "" || item.country === selectedCountry) &&
+        (selectedSector === "" || item.sector === selectedSector) &&
+        (selectedSWOT === "" || item.swot_type === selectedSWOT) &&
+        (selectedLikelihood === "" || item.likelihood === Number(selectedLikelihood))
+    );
 
-    updateCharts(filteredData);
+    console.log("Filtered Results:", filteredResults);
+    updateCharts(filteredResults);
 }
 
 // Update Charts
-function updateCharts(filteredData) {
-    console.log("Updating charts...");
+function updateCharts(filteredData = allData) {
+    if (!Array.isArray(filteredData)) {
+        console.error("filteredData is not an array:", filteredData);
+        return;
+    }
 
-    const intensityBySector = {};
-    filteredData.forEach(d => {
-        if (d.sector) {
-            if (!intensityBySector[d.sector]) {
-                intensityBySector[d.sector] = { total: 0, count: 0 };
-            }
-            intensityBySector[d.sector].total += d.intensity;
-            intensityBySector[d.sector].count += 1;
-        }
-    });
+    console.log("Updating Charts with:", filteredData);
 
-    const sectors = Object.keys(intensityBySector);
-    const intensityValues = sectors.map(sector => intensityBySector[sector].total / intensityBySector[sector].count);
+    // Bar Chart - Intensity vs Sector
+    const sectorLabels = [...new Set(filteredData.map(d => d.sector))];
+    const intensityData = sectorLabels.map(sector => filteredData.filter(d => d.sector === sector).reduce((sum, item) => sum + (item.intensity || 0), 0));
 
-    barChart.data.labels = sectors;
-    barChart.data.datasets[0].data = intensityValues;
+    barChart.data.labels = sectorLabels;
+    barChart.data.datasets[0].data = intensityData;
     barChart.update();
 
-    const sectorCounts = {};
-    filteredData.forEach(d => {
-        if (d.sector) {
-            sectorCounts[d.sector] = (sectorCounts[d.sector] || 0) + 1;
-        }
-    });
-
-    pieChart.data.labels = Object.keys(sectorCounts);
-    pieChart.data.datasets[0].data = Object.values(sectorCounts);
+    // Pie Chart - Sector Distribution by Count
+    const sectorCounts = sectorLabels.map(sector => filteredData.filter(d => d.sector === sector).length);
+    pieChart.data.labels = sectorLabels;
+    pieChart.data.datasets[0].data = sectorCounts;
     pieChart.update();
 
-    const likelihoodByYear = {};
-    filteredData.forEach(d => {
-        if (d.end_year) {
-            if (!likelihoodByYear[d.end_year]) {
-                likelihoodByYear[d.end_year] = { total: 0, count: 0 };
-            }
-            likelihoodByYear[d.end_year].total += d.likelihood;
-            likelihoodByYear[d.end_year].count += 1;
-        }
-    });
+    // Line Chart - Yearly Trends
+    const yearLabels = [...new Set(filteredData.map(d => d.end_year).filter(Boolean))].sort();
+    const yearCounts = yearLabels.map(year => filteredData.filter(d => d.end_year === year).length);
 
-    const years = Object.keys(likelihoodByYear).sort((a, b) => a - b);
-    const likelihoodValues = years.map(year => likelihoodByYear[year].total / likelihoodByYear[year].count);
-
-    lineChart.data.labels = years;
-    lineChart.data.datasets[0].data = likelihoodValues;
+    lineChart.data.labels = yearLabels;
+    lineChart.data.datasets[0].data = yearCounts;
     lineChart.update();
+
+    // SWOT Chart
+    swotChart.data.datasets[0].data = [
+        swotData["Strengths"] || 0,
+        swotData["Weaknesses"] || 0,
+        swotData["Opportunities"] || 0,
+        swotData["Threats"] || 0
+    ];
+    swotChart.update();
 }
 
 // Fetch Data on Page Load
